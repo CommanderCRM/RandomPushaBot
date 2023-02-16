@@ -87,20 +87,12 @@ def send_random_photo(folder_path, chat_id, bot):
     ]
     num_files = len(files)
 
-    # creating a list of random file numbers
-    if not hasattr(send_random_photo, "file_indices"):
-        send_random_photo.file_indices = list(range(num_files))
-        random.shuffle(send_random_photo.file_indices)
+    if num_files == 0:
+      return
 
-    # creating again if the list is empty after using all photos
-    if not send_random_photo.file_indices:
-        send_random_photo.file_indices = list(range(num_files))
-        random.shuffle(send_random_photo.file_indices)
-
-    index = send_random_photo.file_indices.pop()
-    file_name = files[index]
+    random_index = random.randint(0, num_files - 1)
+    file_name = files[random_index]
     file_path = os.path.join(folder_path, file_name)
     bot.send_photo(chat_id, InputFile(file_path))
-
 
 bot.infinity_polling()
