@@ -130,6 +130,7 @@ def handle_messages(message):
 def daily_dose_of_pusha():
     for user_id in db.iterkeys():
         chat_id = db[user_id].decode()
+        bot.send_message(chat_id, "Daily dose of Pusha")
         send_random_photo_from_random_folder(bot, chat_id)
         sleep(5)
 
