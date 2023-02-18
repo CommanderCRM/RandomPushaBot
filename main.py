@@ -22,6 +22,7 @@ db = Vedis("mem")
 belly_str = "Belly🐈"
 loaf_str = "Loaf🍞"
 statue_str = "Statue🐱"
+funny_str = "Funny😹"
 random_str = "Random category🔄"
 
 
@@ -47,17 +48,17 @@ def handle_start(message):
 
     set_user_id(user_id, chat_id)
 
-    keyboard = ReplyKeyboardMarkup()
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
 
     belly = KeyboardButton(text=belly_str)
     loaf = KeyboardButton(text=loaf_str)
     statue = KeyboardButton(text=statue_str)
+    funny = KeyboardButton(text=funny_str)
     random = KeyboardButton(text=random_str)
 
-    keyboard.add(belly)
-    keyboard.add(loaf)
-    keyboard.add(statue)
-    keyboard.add(random)
+    keyboard.row(belly, loaf)
+    keyboard.row(statue, funny)
+    keyboard.row(random)
 
     bot.send_message(
         message.chat.id, "You can also choose with buttons", reply_markup=keyboard
@@ -96,6 +97,16 @@ def handle_statue(message):
 
     send_random_photo(statue_folder_path, chat_id, bot)
 
+@bot.message_handler(commands=["funny"])
+def handle_funny(message):
+    statue_folder_path = os.path.join(os.getcwd(), "pusha", "funny")
+
+    chat_id = message.chat.id
+    user_id = message.from_user.id
+    set_user_id(user_id, chat_id)
+
+    send_random_photo(statue_folder_path, chat_id, bot)
+
 
 @bot.message_handler(commands=["random"])
 def handle_random(message):
@@ -120,13 +131,14 @@ def handle_messages(message):
         handle_loaf(message)
     elif statue_str in message.text:
         handle_statue(message)
+    elif funny_str in message.text:
+        handle_funny(message)
     elif random_str in message.text:
         handle_random(message)
     else:
         bot.reply_to(message, "Something is wrong")
 
 
-@bot.message_handler(func=lambda message: False)
 def daily_dose_of_pusha():
     for user_id in db.iterkeys():
         chat_id = db[user_id].decode()
@@ -195,6 +207,7 @@ def send_random_photo_from_random_folder(bot, chat_id):
     random_file_index = random.randint(0, num_files - 1)
     file_name = files[random_file_index]
     file_path = os.path.join(folder_path, file_name)
+    bot.send_message(chat_id, f"{folder_name.capitalize()}!")
     bot.send_photo(chat_id, InputFile(file_path))
 
 
