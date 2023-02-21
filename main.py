@@ -18,7 +18,7 @@ bot = telebot.TeleBot(f"{api_key}")
 
 # sqlite db initialization
 db = sqlite3.connect('pusha.db', check_same_thread=False)
-db.execute('CREATE TABLE IF NOT EXISTS user_ids (user_id TEXT, chat_id TEXT)')
+db.execute('CREATE TABLE IF NOT EXISTS user_ids (user_id TEXT PRIMARY KEY, chat_id TEXT)')
 
 belly_str = "Belly🐈"
 loaf_str = "Loaf🍞"
