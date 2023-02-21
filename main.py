@@ -6,7 +6,7 @@ import telebot
 import random
 from apscheduler.schedulers.blocking import BlockingScheduler
 from telebot.types import InputFile, ReplyKeyboardMarkup, KeyboardButton
-from vedis import Vedis
+import sqlite3
 
 # running Flask server for the bot to be always on on Replit
 Thread(target=lambda: app.run(host="0.0.0.0")).start()
@@ -16,8 +16,9 @@ api_key = os.getenv("BOT_API")
 # bot instance initialization
 bot = telebot.TeleBot(f"{api_key}")
 
-# vedis db initialization
-db = Vedis("mem")
+# sqlite db initialization
+db = sqlite3.connect('pusha.db', check_same_thread=False)
+db.execute('CREATE TABLE IF NOT EXISTS user_ids (user_id TEXT, chat_id TEXT)')
 
 belly_str = "Belly🐈"
 loaf_str = "Loaf🍞"
@@ -25,14 +26,29 @@ statue_str = "Statue🐱"
 funny_str = "Funny😹"
 random_str = "Random category🔄"
 
+# if user id is not in DB
+def add_user_id(user_id, chat_id):
+    cursor = db.cursor()
+    cursor.execute('SELECT user_id FROM user_ids WHERE user_id = ?', (user_id,))
+    existing_user_id = cursor.fetchone()
+    if existing_user_id is None:
+        cursor.execute('INSERT INTO user_ids (user_id, chat_id) VALUES (?, ?)', (user_id, chat_id))
+        db.commit()
+        return True
+    else:
+        return False
 
-# writing chat id to DB
-def set_user_id(user_id, chat_id):
-    db[user_id] = chat_id
-
-
-def get_user_id(user_id):
-    return db[user_id] or None
+# if user id is in the DB
+def update_chat_id(user_id, chat_id):
+    cursor = db.cursor()
+    cursor.execute('SELECT user_id FROM user_ids WHERE user_id = ?', (user_id,))
+    existing_user_id = cursor.fetchone()
+    if existing_user_id is not None:
+        cursor.execute('UPDATE user_ids SET chat_id = ? WHERE user_id = ?', (chat_id, user_id))
+        db.commit()
+        return True
+    else:
+        return False
 
 
 # start command, just a simple message
@@ -46,7 +62,8 @@ def handle_start(message):
     user_id = message.from_user.id
     chat_id = message.chat.id
 
-    set_user_id(user_id, chat_id)
+    add_user_id(user_id, chat_id)
+    update_chat_id(user_id, chat_id)
 
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
 
@@ -71,7 +88,9 @@ def handle_belly(message):
 
     chat_id = message.chat.id
     user_id = message.from_user.id
-    set_user_id(user_id, chat_id)
+    add_user_id(user_id, chat_id)
+    update_chat_id(user_id, chat_id)
+    
 
     send_random_photo(belly_folder_path, chat_id, bot)
 
@@ -82,7 +101,8 @@ def handle_loaf(message):
 
     chat_id = message.chat.id
     user_id = message.from_user.id
-    set_user_id(user_id, chat_id)
+    add_user_id(user_id, chat_id)
+    update_chat_id(user_id, chat_id)
 
     send_random_photo(loaf_folder_path, chat_id, bot)
 
@@ -93,7 +113,8 @@ def handle_statue(message):
 
     chat_id = message.chat.id
     user_id = message.from_user.id
-    set_user_id(user_id, chat_id)
+    add_user_id(user_id, chat_id)
+    update_chat_id(user_id, chat_id)
 
     send_random_photo(statue_folder_path, chat_id, bot)
 
@@ -103,7 +124,8 @@ def handle_funny(message):
 
     chat_id = message.chat.id
     user_id = message.from_user.id
-    set_user_id(user_id, chat_id)
+    add_user_id(user_id, chat_id)
+    update_chat_id(user_id, chat_id)
 
     send_random_photo(statue_folder_path, chat_id, bot)
 
@@ -112,7 +134,8 @@ def handle_funny(message):
 def handle_random(message):
     chat_id = message.chat.id
     user_id = message.from_user.id
-    set_user_id(user_id, chat_id)
+    add_user_id(user_id, chat_id)
+    update_chat_id(user_id, chat_id)
 
     send_random_photo_from_random_folder(bot, chat_id)
 
@@ -123,7 +146,8 @@ def handle_messages(message):
     user_id = message.from_user.id
     chat_id = message.chat.id
 
-    set_user_id(user_id, chat_id)
+    add_user_id(user_id, chat_id)
+    update_chat_id(user_id, chat_id)
 
     if belly_str in message.text:
         handle_belly(message)
@@ -140,11 +164,16 @@ def handle_messages(message):
 
 
 def daily_dose_of_pusha():
-    for user_id in db.iterkeys():
-        chat_id = db[user_id].decode()
+    result = db.execute('SELECT chat_id FROM user_ids')
+    try:
+      rows = result.fetchall()
+      for row in rows:
+        chat_id = row[0]
         bot.send_message(chat_id, "Daily dose of Pusha")
         send_random_photo_from_random_folder(bot, chat_id)
         sleep(5)
+    except Exception as e:
+      print("Error occurred while fetching chat IDs from the database:", e)
 
 
 # sending daily dose of pusha each day on 5:00 MSK
@@ -209,7 +238,6 @@ def send_random_photo_from_random_folder(bot, chat_id):
     file_path = os.path.join(folder_path, file_name)
     bot.send_message(chat_id, f"{folder_name.capitalize()}!")
     bot.send_photo(chat_id, InputFile(file_path))
-
 
 Thread(target=schedule_checker).start()
 
