@@ -99,7 +99,8 @@ def handle_belly(message):
     add_user_id(user_id, chat_id)
     update_chat_id(user_id, chat_id)
 
-    send_random_photo(belly_folder_path, chat_id, bot)
+    random_file = get_random_file(belly_folder_path)
+    send_random_photo(chat_id, random_file)
 
 
 @bot.message_handler(commands=["loaf"])
@@ -111,7 +112,8 @@ def handle_loaf(message):
     add_user_id(user_id, chat_id)
     update_chat_id(user_id, chat_id)
 
-    send_random_photo(loaf_folder_path, chat_id, bot)
+    random_file = get_random_file(loaf_folder_path)
+    send_random_photo(chat_id, random_file)
 
 
 @bot.message_handler(commands=["statue"])
@@ -123,19 +125,21 @@ def handle_statue(message):
     add_user_id(user_id, chat_id)
     update_chat_id(user_id, chat_id)
 
-    send_random_photo(statue_folder_path, chat_id, bot)
+    random_file = get_random_file(statue_folder_path)
+    send_random_photo(chat_id, random_file)
 
 
 @bot.message_handler(commands=["funny"])
 def handle_funny(message):
-    statue_folder_path = os.path.join(os.getcwd(), "pusha", "funny")
+    funny_folder_path = os.path.join(os.getcwd(), "pusha", "funny")
 
     chat_id = message.chat.id
     user_id = message.from_user.id
     add_user_id(user_id, chat_id)
     update_chat_id(user_id, chat_id)
 
-    send_random_photo(statue_folder_path, chat_id, bot)
+    random_file = get_random_file(funny_folder_path)
+    send_random_photo(chat_id, random_file)
 
 
 @bot.message_handler(commands=["random"])
@@ -200,7 +204,7 @@ under "pusha/{category}"
 """
 
 
-def send_random_photo(folder_path, chat_id, bot):
+def get_random_file(folder_path):
     files = [
         f
         for f in os.listdir(folder_path)
@@ -214,7 +218,15 @@ def send_random_photo(folder_path, chat_id, bot):
     random_index = random.randint(0, num_files - 1)
     file_name = files[random_index]
     file_path = os.path.join(folder_path, file_name)
+    return file_path
+
+
+def send_random_photo(chat_id, file_path):
     bot.send_photo(chat_id, InputFile(file_path))
+
+
+def send_random_video(chat_id, file_path):
+    bot.send_video(chat_id, InputFile(file_path))
 
 
 def send_random_photo_from_random_folder(bot, chat_id):
