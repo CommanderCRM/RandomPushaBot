@@ -4,9 +4,10 @@ from time import sleep
 import os
 import telebot
 import random
+import sqlite3
 from apscheduler.schedulers.blocking import BlockingScheduler
 from telebot.types import InputFile, ReplyKeyboardMarkup, KeyboardButton
-import sqlite3
+from db import db_creation, add_user_id, update_chat_id
 
 # running Flask server for the bot to be always on on Replit
 Thread(target=lambda: app.run(host="0.0.0.0")).start()
@@ -18,45 +19,13 @@ bot = telebot.TeleBot(f"{api_key}")
 
 # sqlite db initialization
 db = sqlite3.connect("pusha.db", check_same_thread=False)
-db.execute(
-    "CREATE TABLE IF NOT EXISTS user_ids (user_id TEXT PRIMARY KEY, chat_id TEXT)"
-)
+db_creation()
 
 belly_str = "Belly🐈"
 loaf_str = "Loaf🍞"
 statue_str = "Statue🐱"
 funny_str = "Funny😹"
 random_str = "Random category🔄"
-
-
-# if user id is not in DB
-def add_user_id(user_id, chat_id):
-    cursor = db.cursor()
-    cursor.execute("SELECT user_id FROM user_ids WHERE user_id = ?", (user_id,))
-    existing_user_id = cursor.fetchone()
-    if existing_user_id is None:
-        cursor.execute(
-            "INSERT INTO user_ids (user_id, chat_id) VALUES (?, ?)", (user_id, chat_id)
-        )
-        db.commit()
-        return True
-    else:
-        return False
-
-
-# if user id is in the DB
-def update_chat_id(user_id, chat_id):
-    cursor = db.cursor()
-    cursor.execute("SELECT user_id FROM user_ids WHERE user_id = ?", (user_id,))
-    existing_user_id = cursor.fetchone()
-    if existing_user_id is not None:
-        cursor.execute(
-            "UPDATE user_ids SET chat_id = ? WHERE user_id = ?", (chat_id, user_id)
-        )
-        db.commit()
-        return True
-    else:
-        return False
 
 
 # start command, just a simple message
