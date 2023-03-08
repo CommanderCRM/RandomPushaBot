@@ -25,6 +25,7 @@ belly_str = "Belly🐈"
 loaf_str = "Loaf🍞"
 statue_str = "Statue🐱"
 funny_str = "Funny😹"
+video_str = "Video📹"
 random_str = "Random category🔄"
 
 
@@ -33,7 +34,7 @@ random_str = "Random category🔄"
 def handle_start(message):
     bot.reply_to(
         message,
-        "Hello and welcome to Random Pusha Bot (meow)! Choose between different categories with commands (such as /belly, /loaf, /statue, /random) and get random pics of our cat!",
+        "Hello and welcome to Random Pusha Bot (meow)! Choose between different categories with commands (such as /belly, /loaf, /statue, /random) and get random pics (and even videos) of our cat!",
     )
 
     user_id = message.from_user.id
@@ -48,11 +49,12 @@ def handle_start(message):
     loaf = KeyboardButton(text=loaf_str)
     statue = KeyboardButton(text=statue_str)
     funny = KeyboardButton(text=funny_str)
+    video = KeyboardButton(text=video_str)
     random = KeyboardButton(text=random_str)
 
     keyboard.row(belly, loaf)
     keyboard.row(statue, funny)
-    keyboard.row(random)
+    keyboard.row(video, random)
 
     bot.send_message(
         message.chat.id, "You can also choose with buttons", reply_markup=keyboard
@@ -111,6 +113,20 @@ def handle_funny(message):
     send_random_photo(chat_id, random_file)
 
 
+@bot.message_handler(commands=["video"])
+def handle_video(message):
+    video_folder_path = os.path.join(os.getcwd(), "pusha", "videos")
+
+    chat_id = message.chat.id
+    user_id = message.from_user.id
+    add_user_id(user_id, chat_id)
+    update_chat_id(user_id, chat_id)
+
+    random_file = get_random_file(video_folder_path)
+    bot.send_message(chat_id, "Please wait...")
+    send_random_video(chat_id, random_file)
+
+
 @bot.message_handler(commands=["random"])
 def handle_random(message):
     chat_id = message.chat.id
@@ -138,6 +154,8 @@ def handle_messages(message):
         handle_statue(message)
     elif funny_str in message.text:
         handle_funny(message)
+    elif video_str in message.text:
+        handle_video(message)
     elif random_str in message.text:
         handle_random(message)
     else:
