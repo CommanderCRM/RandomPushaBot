@@ -115,7 +115,7 @@ def handle_funny(message):
 
 @bot.message_handler(commands=["video"])
 def handle_video(message):
-    video_folder_path = os.path.join(os.getcwd(), "pusha", "videos")
+    video_folder_path = os.path.join(os.getcwd(), "pusha", "video")
 
     chat_id = message.chat.id
     user_id = message.from_user.id
@@ -134,7 +134,7 @@ def handle_random(message):
     add_user_id(user_id, chat_id)
     update_chat_id(user_id, chat_id)
 
-    send_random_photo_from_random_folder(bot, chat_id)
+    send_random_media_from_random_folder(bot, chat_id)
 
 
 # when button is pressed (generally)
@@ -169,7 +169,7 @@ def daily_dose_of_pusha():
         for row in rows:
             chat_id = row[0]
             bot.send_message(chat_id, "Daily dose of Pusha")
-            send_random_photo_from_random_folder(bot, chat_id)
+            send_random_media_from_random_folder(bot, chat_id)
             sleep(5)
     except Exception as e:
         print("Error occurred while fetching chat IDs from the database:", e)
@@ -216,7 +216,7 @@ def send_random_video(chat_id, file_path):
     bot.send_video(chat_id, InputFile(file_path))
 
 
-def send_random_photo_from_random_folder(bot, chat_id):
+def send_random_media_from_random_folder(bot, chat_id):
     pusha_path = os.path.join(os.getcwd(), "pusha")
     folders = [
         f for f in os.listdir(pusha_path) if os.path.isdir(os.path.join(pusha_path, f))
@@ -242,9 +242,14 @@ def send_random_photo_from_random_folder(bot, chat_id):
 
     random_file_index = random.randint(0, num_files - 1)
     file_name = files[random_file_index]
+    file_extension = os.path.splitext(file_name)[1]
     file_path = os.path.join(folder_path, file_name)
+
     bot.send_message(chat_id, f"{folder_name.capitalize()}!")
-    bot.send_photo(chat_id, InputFile(file_path))
+    if file_extension == ".mp4":
+        bot.send_video(chat_id, InputFile(file_path))
+    else:
+        bot.send_photo(chat_id, InputFile(file_path))
 
 
 Thread(target=schedule_checker).start()
